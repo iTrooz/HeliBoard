@@ -65,6 +65,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
 
     override fun onReleaseKey(primaryCode: Int, withSliding: Boolean) {
         metaOnReleaseKey(primaryCode)
+        if (latinIME.isEmojiSearch && (primaryCode == KeyCode.NUMPAD || primaryCode == KeyCode.DPAD)) return
         keyboardSwitcher.onReleaseKey(primaryCode, withSliding, latinIME.currentAutoCapsState, latinIME.currentRecapitalizeState)
     }
 
@@ -104,6 +105,13 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
     }
 
     override fun onCodeInput(primaryCode: Int, x: Int, y: Int, isKeyRepeat: Boolean) {
+        if (latinIME.isEmojiSearch) {
+            val mkv = keyboardSwitcher.mainKeyboardView
+            val event = Event.createSoftwareKeypressEvent(primaryCode, metaState, mkv.getKeyX(x), mkv.getKeyY(y), isKeyRepeat)
+            latinIME.onEvent(event)
+            metaAfterCodeInput(primaryCode)
+            return
+        }
         when (primaryCode) {
             KeyCode.TOGGLE_AUTOCORRECT -> return settings.toggleAutoCorrect()
             KeyCode.TOGGLE_INCOGNITO_MODE -> {
@@ -157,6 +165,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
     override fun onTextInput(text: String?) = latinIME.onTextInput(text)
 
     override fun onContent(content: InputContentInfoCompat) {
+        if (latinIME.isEmojiSearch) return
         val editorInfo = latinIME.currentInputEditorInfo
         val editorMimeTypes = EditorInfoCompat.getContentMimeTypes(editorInfo)
         if (editorMimeTypes.any { content.description.hasMimeType(it) }) {
@@ -196,7 +205,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
         }
     }
 
-    override fun onHorizontalSpaceSwipe(steps: Int): Boolean = when (Settings.getValues().mSpaceSwipeHorizontal) {
+    override fun onHorizontalSpaceSwipe(steps: Int): Boolean = if (latinIME.isEmojiSearch) true else when (Settings.getValues().mSpaceSwipeHorizontal) {
         KeyboardActionListener.SwipeAction.MOVE_CURSOR -> onMoveCursorHorizontally(steps)
         KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE -> onLanguageSlide(steps)
         KeyboardActionListener.SwipeAction.TOGGLE_NUMPAD -> {
@@ -210,7 +219,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
         else -> false
     }
 
-    override fun onVerticalSpaceSwipe(steps: Int): Boolean = when (Settings.getValues().mSpaceSwipeVertical) {
+    override fun onVerticalSpaceSwipe(steps: Int): Boolean = if (latinIME.isEmojiSearch) true else when (Settings.getValues().mSpaceSwipeVertical) {
         KeyboardActionListener.SwipeAction.MOVE_CURSOR -> onMoveCursorVertically(steps)
         KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE -> onLanguageSlide(steps)
         KeyboardActionListener.SwipeAction.TOGGLE_NUMPAD -> {
@@ -247,14 +256,17 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
     }
 
     override fun toggleLayout(layout: LayoutDirective.Utility, autoCapsFlags: Int, recapitalizeMode: RecapitalizeMode?) {
+        if (latinIME.isEmojiSearch) return
         keyboardSwitcher.toggleLayout(layout, autoCapsFlags, recapitalizeMode)
     }
 
     override fun onLongPressAlphaSymbolForNumpad() {
+        if (latinIME.isEmojiSearch) return
         keyboardSwitcher.onLongPressAlphaSymbolForNumpad()
     }
 
     override fun onMoveDeletePointer(steps: Int) {
+        if (latinIME.isEmojiSearch) return
         inputLogic.finishInput()
         val end = connection.expectedSelectionEnd
         val actualSteps = actualSteps(steps)
@@ -277,6 +289,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
     }
 
     override fun onUpWithDeletePointerActive() {
+        if (latinIME.isEmojiSearch) return
         if (!connection.hasSelection()) return
         inputLogic.finishInput()
         onCodeInput(KeyCode.DELETE, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false)

@@ -36,7 +36,11 @@ import helium314.keyboard.keyboard.KeyboardActionListener;
 import helium314.keyboard.keyboard.KeyboardActionListenerImpl;
 import helium314.keyboard.keyboard.emoji.EmojiPalettesView;
 import helium314.keyboard.keyboard.emoji.EmojiSearchActivity;
-import helium314.keyboard.keyboard.emoji.EmojiSearchActivityKt;
+import helium314.keyboard.keyboard.emoji.EmojiSearchInput;
+import helium314.keyboard.keyboard.emoji.EmojiSearchInputConsumption;
+import helium314.keyboard.keyboard.emoji.EmojiSearchPanel;
+import helium314.keyboard.keyboard.emoji.EmojiSearchSession;
+import helium314.keyboard.keyboard.emoji.EmojiSearchTarget;
 import helium314.keyboard.keyboard.internal.KeyboardIconsSet;
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode;
 import helium314.keyboard.event.Event;
@@ -213,6 +217,7 @@ public class LatinIME extends InputMethodService implements
                     latinIme.resetDictionaryFacilitatorIfNecessary();
                     break;
                 case MSG_UPDATE_TAIL_BATCH_INPUT_COMPLETED:
+                    if (latinIme.isEmojiSearch()) break;
                     final SuggestedWords suggestedWords = (SuggestedWords) msg.obj;
                     latinIme.mInputLogic.onUpdateTailBatchInputCompleted(
                             latinIme.mSettings.getCurrent(),
@@ -614,6 +619,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onDestroy() {
+        closeEmojiSearch(false);
         mClipboardHistoryManager.onDestroy();
         mDictionaryFacilitator.closeDictionaries();
         mSettings.onDestroy();
@@ -631,6 +637,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onConfigurationChanged(final Configuration conf) {
+        closeEmojiSearch(false);
         SettingsValues settingsValues = mSettings.getCurrent();
         Log.i(TAG, "onConfigurationChanged");
         SubtypeSettings.INSTANCE.reloadSystemLocales(this);
@@ -667,12 +674,14 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public View onCreateInputView() {
+        closeEmojiSearch(false);
         StatsUtils.onCreateInputView();
         return mKeyboardSwitcher.onCreateInputView(KtxKt.getDisplayContext(this), mIsHardwareAcceleratedDrawingEnabled);
     }
 
     @Override
     public void setInputView(final View view) {
+        closeEmojiSearch(false);
         super.setInputView(view);
         // updateSoftInputWindowLayoutParameters needs to happen after setInputView
         mKeyboardSwitcher.updateSoftInputWindowLayoutParameters();
@@ -696,6 +705,13 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onStartInput(final EditorInfo editorInfo, final boolean restarting) {
+        final EditorInfo currentEditor = getCurrentInputEditorInfo();
+        if (restarting && editorInfo != null && mEmojiSearchTarget != null && mEmojiSearchInputConsumption != null
+                && currentEditor != null && mEmojiSearchTarget.matchesRestart(editorInfo.packageName, editorInfo.fieldId)
+                && mEmojiSearchTarget.matchesRestart(currentEditor.packageName, currentEditor.fieldId)) {
+            mEmojiSearchInputConsumption.closeForRestart(getCurrentInputConnection());
+        }
+        closeEmojiSearch(false);
         mHandler.onStartInput(editorInfo, restarting);
     }
 
@@ -707,6 +723,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onFinishInputView(final boolean finishingInput) {
+        closeEmojiSearch(false);
         StatsUtils.onFinishInputView();
         mHandler.onFinishInputView(finishingInput);
         mStatsUtilsManager.onFinishInputView();
@@ -716,8 +733,15 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onFinishInput() {
+        closeEmojiSearch(false);
         mHandler.onFinishInput();
         BackgroundGatheringCache.saveOrClear(this);
+    }
+
+    @Override
+    public void onUnbindInput() {
+        closeEmojiSearch(false);
+        super.onUnbindInput();
     }
 
     @Override
@@ -928,6 +952,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onWindowHidden() {
+        closeEmojiSearch(false);
         super.onWindowHidden();
         Log.i(TAG, "onWindowHidden");
         closeMainKeyboard();
@@ -1243,6 +1268,27 @@ public class LatinIME extends InputMethodService implements
     // This method is public for testability of LatinIME, but also in the future it should
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
+        if (isEmojiSearch()) {
+            final int code = event.getKeyCode();
+            final boolean modeKey = code == KeyCode.SHIFT || code == KeyCode.CAPS_LOCK
+                    || code == KeyCode.SYMBOL_ALPHA || code == KeyCode.ALPHA || code == KeyCode.SYMBOL;
+            if (modeKey) {
+                mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+            } else {
+                if (event.getMetaState() != 0) return;
+                if (code == KeyCode.ARROW_LEFT || code == KeyCode.ARROW_RIGHT) {
+                    moveEmojiSearchCursor(code == KeyCode.ARROW_RIGHT);
+                    return;
+                }
+                EmojiSearchInput.Result result = mEmojiSearchInput.onCodeInput(code == 0 ? event.getCodePoint() : code);
+                if (result == EmojiSearchInput.Result.DONE) closeEmojiSearch();
+                else if (result == EmojiSearchInput.Result.HANDLED) {
+                    mEmojiSearchPanel.updateCursor(mEmojiSearchInput.getSelectionEnd());
+                    mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+                }
+            }
+            return;
+        }
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
             mRichImm.switchToShortcutIme(this);
         }
@@ -1254,6 +1300,11 @@ public class LatinIME extends InputMethodService implements
 
     public void onTextInput(@Nullable String rawText) {
         if (rawText == null) return;
+        if (isEmojiSearch()) {
+            mEmojiSearchInput.onTextInput(rawText);
+            mEmojiSearchPanel.updateCursor(mEmojiSearchInput.getSelectionEnd());
+            return;
+        }
         // TODO: have the keyboard pass the correct key code when we need it.
         Event event = Event.createSoftwareTextEvent(rawText, KeyCode.MULTIPLE_CODE_POINTS, null);
         InputTransaction completeInputTransaction = mInputLogic.onTextInput(mSettings.getCurrent(),
@@ -1264,20 +1315,24 @@ public class LatinIME extends InputMethodService implements
     }
 
     public void onStartBatchInput() {
+        if (isEmojiSearch()) return;
         mInputLogic.onStartBatchInput(mSettings.getCurrent(), mKeyboardSwitcher, mHandler);
         mGestureConsumer.onGestureStarted(mRichImm.getCurrentSubtypeLocale(), mKeyboardSwitcher.getKeyboard());
     }
 
     public void onUpdateBatchInput(final InputPointers batchPointers) {
+        if (isEmojiSearch()) return;
         mInputLogic.onUpdateBatchInput(batchPointers);
     }
 
     public void onEndBatchInput(final InputPointers batchPointers) {
+        if (isEmojiSearch()) return;
         mInputLogic.onEndBatchInput(batchPointers);
         mGestureConsumer.onGestureCompleted(batchPointers);
     }
 
     public void onCancelBatchInput() {
+        if (isEmojiSearch()) return;
         mInputLogic.onCancelBatchInput(mHandler);
         mGestureConsumer.onGestureCanceled();
     }
@@ -1290,6 +1345,7 @@ public class LatinIME extends InputMethodService implements
      * @param suggestedWords suggested words by the IME for the full gesture.
      */
     public void onTailBatchInputResultShown(final SuggestedWords suggestedWords) {
+        if (isEmojiSearch()) return;
         mGestureConsumer.onImeSuggestionsProcessed(suggestedWords,
                 mInputLogic.getComposingStart(), mInputLogic.getComposingLength(),
                 mDictionaryFacilitator);
@@ -1304,7 +1360,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     public boolean hasSuggestionStripView() {
-        return null != mSuggestionStripView;
+        return null != mSuggestionStripView && !isEmojiSearch();
     }
 
     private void setSuggestedWords(SuggestedWords suggestedWords) {
@@ -1362,6 +1418,7 @@ public class LatinIME extends InputMethodService implements
     // interface
     @Override
     public void pickSuggestionManually(SuggestedWordInfo suggestionInfo) {
+        if (isEmojiSearch()) return;
         InputTransaction completeInputTransaction = mInputLogic.onPickSuggestionManually(
                 mSettings.getCurrent(), suggestionInfo, mKeyboardSwitcher.getKeyboardCapsMode(), mHandler);
         updateStateAfterInputTransaction(completeInputTransaction);
@@ -1497,6 +1554,20 @@ public class LatinIME extends InputMethodService implements
     // Hooks for hardware keyboard
     @Override
     public boolean onKeyDown(final int keyCode, final KeyEvent keyEvent) {
+        if (isEmojiSearch()) {
+            mSearchHardwareKeys.add(keyCode);
+            if (keyCode == KeyEvent.KEYCODE_BACK) closeEmojiSearch();
+            else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                if (!keyEvent.isShiftPressed() && !keyEvent.isCtrlPressed() && !keyEvent.isAltPressed() && !keyEvent.isMetaPressed())
+                    moveEmojiSearchCursor(keyCode == KeyEvent.KEYCODE_DPAD_RIGHT);
+            } else {
+                EmojiSearchInput.Result result = mEmojiSearchInput.onKeyDown(keyEvent);
+                if (result == EmojiSearchInput.Result.DONE) closeEmojiSearch();
+                else if (result == EmojiSearchInput.Result.HANDLED)
+                    mEmojiSearchPanel.updateCursor(mEmojiSearchInput.getSelectionEnd());
+            }
+            return true;
+        }
         if (mKeyboardActionListener.onKeyDown(keyCode, keyEvent))
             return true;
         return super.onKeyDown(keyCode, keyEvent);
@@ -1504,9 +1575,16 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public boolean onKeyUp(final int keyCode, final KeyEvent keyEvent) {
+        if (mSearchHardwareKeys.remove(keyCode) || isEmojiSearch()) return true;
         if (mKeyboardActionListener.onKeyUp(keyCode, keyEvent))
             return true;
         return super.onKeyUp(keyCode, keyEvent);
+    }
+
+    @Override
+    public boolean onKeyMultiple(final int keyCode, final int count, final KeyEvent event) {
+        if (isEmojiSearch()) return true;
+        return super.onKeyMultiple(keyCode, count, event);
     }
 
     // todo: onKeyDown and onKeyUp are the main events we are interested in. There are two more events
@@ -1537,18 +1615,129 @@ public class LatinIME extends InputMethodService implements
         }
     }
 
+    private EmojiSearchPanel mEmojiSearchPanel;
+    private EmojiSearchInput mEmojiSearchInput;
+    private EmojiSearchSession mEmojiSearchSession;
+    private EmojiSearchInputConsumption mEmojiSearchInputConsumption;
+    private EmojiSearchTarget mEmojiSearchTarget;
+    private final java.util.Set<Integer> mSearchHardwareKeys = new java.util.HashSet<>();
+    private int mEmojiSearchGeneration;
+    private int mSearchStripVisibility;
+
+    /** Moves the query cursor according to the display's bidirectional text layout. */
+    private void moveEmojiSearchCursor(final boolean right) {
+        final int offset = mEmojiSearchPanel.cursorToSide(mEmojiSearchInput.getSelectionEnd(), right);
+        mEmojiSearchInput.setSelection(offset, offset);
+        mEmojiSearchPanel.updateCursor(mEmojiSearchInput.getSelectionEnd());
+    }
+
+    /** Opens after the initiating key event has finished updating keyboard state. */
     public void launchEmojiSearch() {
-        Log.d(EmojiSearchActivityKt.TAG, "before activity launch");
-        startActivity(new Intent().setClass(this, EmojiSearchActivity.class)
-                          .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_MULTIPLE_TASK));
+        final View inputView = mKeyboardSwitcher.getInputViewRootView();
+        final android.view.inputmethod.InputConnection targetConnection = getCurrentInputConnection();
+        final EditorInfo targetEditor = getCurrentInputEditorInfo();
+        final int generation = ++mEmojiSearchGeneration;
+        if (inputView == null || targetConnection == null || targetEditor == null) return;
+        final EmojiSearchTarget target = new EmojiSearchTarget(targetConnection, targetEditor,
+                targetEditor.packageName, targetEditor.fieldId);
+        final kotlin.jvm.functions.Function0<Boolean> targetIsCurrent = () -> {
+            final EditorInfo editor = getCurrentInputEditorInfo();
+            return target.matches(getCurrentInputConnection(), editor,
+                    editor == null ? null : editor.packageName, editor == null ? 0 : editor.fieldId);
+        };
+        onCancelBatchInput();
+        mHandler.post(() -> {
+            if (generation != mEmojiSearchGeneration || inputView != mKeyboardSwitcher.getInputViewRootView() || !targetIsCurrent.invoke()) return;
+            final android.widget.FrameLayout container = inputView.findViewById(R.id.emoji_search_container);
+            if (container == null || isEmojiSearch()) return;
+            mHandler.cancelUpdateSuggestionStrip();
+            mInputLogic.finishInput();
+            View strip = inputView.findViewById(R.id.strip_container);
+            mSearchStripVisibility = strip.getVisibility();
+            mEmojiSearchPanel = new EmojiSearchPanel(this);
+            mEmojiSearchInput = new EmojiSearchInput("", text -> {
+                if (mEmojiSearchPanel != null) mEmojiSearchPanel.updateQuery(text);
+                return kotlin.Unit.INSTANCE;
+            });
+            final EmojiSearchPanel panel = mEmojiSearchPanel;
+            final EmojiSearchInput input = mEmojiSearchInput;
+            panel.setOnClose(() -> { if (mEmojiSearchPanel == panel) closeEmojiSearch(); });
+            panel.setOnClearQuery(() -> {
+                if (mEmojiSearchPanel == panel) {
+                    input.clear();
+                    panel.updateCursor(input.getSelectionEnd());
+                }
+            });
+            panel.setOnCursorTap(offset -> {
+                if (mEmojiSearchPanel == panel) {
+                    input.setSelection(offset, offset);
+                    panel.updateCursor(input.getSelectionEnd());
+                }
+            });
+            mEmojiSearchSession = new EmojiSearchSession(targetIsCurrent, emoji -> {
+                mInputLogic.mConnection.beginBatchEdit();
+                try {
+                    if (targetIsCurrent.invoke()) mInputLogic.mConnection.commitText(emoji, 1);
+                } finally {
+                    mInputLogic.mConnection.endBatchEdit();
+                }
+                return kotlin.Unit.INSTANCE;
+            });
+            final EmojiSearchSession session = mEmojiSearchSession;
+            mEmojiSearchPanel.setOnEmojiSelected(session::select);
+            mKeyboardSwitcher.resetKeyboardStateToAlphabet();
+            strip.setVisibility(View.GONE);
+            container.addView(mEmojiSearchPanel);
+            container.setVisibility(View.VISIBLE);
+            container.requestLayout();
+            mEmojiSearchInputConsumption = new EmojiSearchInputConsumption(targetConnection, targetIsCurrent);
+            mEmojiSearchTarget = target;
+            mEmojiSearchInputConsumption.open();
+        });
+    }
+
+    /** Closes search and returns to the emoji palette. */
+    public void closeEmojiSearch() {
+        closeEmojiSearch(true);
+    }
+
+    /** Lifecycle teardown does not reopen a keyboard for an editor that is going away. */
+    private void closeEmojiSearch(final boolean restoreEmojiKeyboard) {
+        ++mEmojiSearchGeneration;
+        if (mEmojiSearchInputConsumption != null) {
+            mEmojiSearchInputConsumption.close();
+            mEmojiSearchInputConsumption = null;
+        }
+        mEmojiSearchTarget = null;
+        if (mEmojiSearchPanel == null) return;
+        final View panel = mEmojiSearchPanel;
+        mEmojiSearchSession.close();
+        mEmojiSearchSession = null;
+        mEmojiSearchPanel.close();
+        mEmojiSearchPanel = null;
+        mEmojiSearchInput = null;
+        if (panel.getParent() instanceof android.view.ViewGroup) {
+            android.view.ViewGroup container = (android.view.ViewGroup) panel.getParent();
+            container.removeView(panel);
+            container.setVisibility(View.GONE);
+        }
+        final View inputView = mKeyboardSwitcher.getInputViewRootView();
+        if (inputView != null) {
+            if (restoreEmojiKeyboard) mKeyboardSwitcher.setEmojiKeyboard();
+            else {
+                View strip = inputView.findViewById(R.id.strip_container);
+                if (strip != null) strip.setVisibility(mSearchStripVisibility);
+            }
+            inputView.requestLayout();
+        }
     }
 
     public boolean isEmojiSearch() {
-        return getEmojiSearchActivityHeight() > 0;
+        return mEmojiSearchPanel != null;
     }
 
-    public int getEmojiSearchActivityHeight() {
-        return EmojiSearchActivity.Companion.decodePrivateImeOptions(getCurrentInputEditorInfo()).height();
+    public int getEmojiSearchHeight() {
+        return mEmojiSearchPanel == null ? 0 : mEmojiSearchPanel.getPanelHeight();
     }
 
     // slightly modified from Simple Keyboard: https://github.com/rkkr/simple-keyboard/blob/master/app/src/main/java/rkr/simplekeyboard/inputmethod/latin/LatinIME.java

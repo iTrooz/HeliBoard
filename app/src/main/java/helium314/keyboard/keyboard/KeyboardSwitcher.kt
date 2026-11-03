@@ -98,6 +98,7 @@ class KeyboardSwitcher private constructor() {
     val mainKeyboardView get() = inputView?.keyboardView
     val keyboard get() = mainKeyboardView?.keyboard
     val wrapperView get() = inputView?.wrapperView
+    val inputViewRootView get() = inputView?.root
     val stripContainer get() = inputView?.stripContainer
     val emojiTabStrip get() = inputView?.emojiTabStrip
     val clipboardStrip get() = inputView?.mainKeyboardFrame?.stripContainer?.clipboardStrip
@@ -215,7 +216,7 @@ class KeyboardSwitcher private constructor() {
 
         val visibleKeyboardView = inputView.wrapperView
         val inputHeight = inputView.root.height
-        if (isImeSuppressedByHardwareKeyboard(Settings.getValues(), keyboardSwitchState) && !visibleKeyboardView.isShown) {
+        if (isImeSuppressedByHardwareKeyboard(Settings.getValues(), keyboardSwitchState) && !visibleKeyboardView.isShown && !latinIME.isEmojiSearch) {
             // If there is a hardware keyboard and a visible software keyboard view has been hidden,
             // no visual element will be shown on the screen.
             // for some reason setting contentTopInsets and visibleTopInsets broke somewhere along the
@@ -236,10 +237,10 @@ class KeyboardSwitcher private constructor() {
 
         // Need to set expanded touchable region only if a keyboard view is being shown.
         // When using a floating keyboard and the showToolbarOnly setting, the wrapper view may be hidden but we still have a view
-        if (visibleKeyboardView.isShown || (Settings.getValues().mIsFloatingKeyboard && inputView.root.isShown)) {
+        if (visibleKeyboardView.isShown || (Settings.getValues().mIsFloatingKeyboard && inputView.root.isShown) || latinIME.isEmojiSearch) {
             var touchLeft = 0
             var touchTop = if (isShowingPopupKeysPanel) 0 else visibleTopY
-            var touchRight = visibleKeyboardView.width
+            var touchRight = if (latinIME.isEmojiSearch) inputView.root.width else visibleKeyboardView.width
             var touchBottom = inputHeight + EXTENDED_TOUCHABLE_REGION_HEIGHT // Extend touchable region below the keyboard.
             if (Settings.getValues().mIsFloatingKeyboard) {
                 val xy = FloatingKeyboardUtils.readPosition(themeContext, Int.MAX_VALUE, Int.MAX_VALUE)
@@ -254,7 +255,7 @@ class KeyboardSwitcher private constructor() {
 
 
         // Has to be subtracted after calculating touchableRegion
-        visibleTopY -= latinIME.emojiSearchActivityHeight
+        visibleTopY -= latinIME.emojiSearchHeight
 
         outInsets.contentTopInsets = visibleTopY
         outInsets.visibleTopInsets = visibleTopY
