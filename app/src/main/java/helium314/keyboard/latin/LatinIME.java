@@ -1620,6 +1620,7 @@ public class LatinIME extends InputMethodService implements
     private EmojiSearchSession mEmojiSearchSession;
     private EmojiSearchInputConsumption mEmojiSearchInputConsumption;
     private EmojiSearchTarget mEmojiSearchTarget;
+    private final EmojiSearchWindowDim mEmojiSearchWindowDim = new EmojiSearchWindowDim();
     private final java.util.Set<Integer> mSearchHardwareKeys = new java.util.HashSet<>();
     private int mEmojiSearchGeneration;
     private int mSearchStripVisibility;
@@ -1690,6 +1691,7 @@ public class LatinIME extends InputMethodService implements
             container.addView(mEmojiSearchPanel);
             container.setVisibility(View.VISIBLE);
             container.requestLayout();
+            mEmojiSearchWindowDim.open(getWindow() == null ? null : getWindow().getWindow());
             mEmojiSearchInputConsumption = new EmojiSearchInputConsumption(targetConnection, targetIsCurrent);
             mEmojiSearchTarget = target;
             mEmojiSearchInputConsumption.open();
@@ -1704,6 +1706,7 @@ public class LatinIME extends InputMethodService implements
     /** Lifecycle teardown does not reopen a keyboard for an editor that is going away. */
     private void closeEmojiSearch(final boolean restoreEmojiKeyboard) {
         ++mEmojiSearchGeneration;
+        mEmojiSearchWindowDim.close();
         if (mEmojiSearchInputConsumption != null) {
             mEmojiSearchInputConsumption.close();
             mEmojiSearchInputConsumption = null;

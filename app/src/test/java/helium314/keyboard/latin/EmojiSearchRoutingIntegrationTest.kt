@@ -2,6 +2,8 @@
 package helium314.keyboard.latin
 
 import android.view.KeyEvent
+import android.view.Window
+import android.view.WindowManager
 import androidx.core.content.edit
 import helium314.keyboard.ShadowInputMethodManager2
 import helium314.keyboard.ShadowInputMethodService
@@ -94,6 +96,21 @@ class EmojiSearchRoutingIntegrationTest {
         ShadowInputMethodService.selectionEnd = 12
         session.select("🐸")
         assertEquals("other editor", ShadowInputMethodService.text)
+    }
+
+    /** Lifecycle teardown restores dimming even when a later close is repeated. */
+    @Test
+    fun changingEditorRestoresWindowDimming() {
+        val window = Mockito.mock(Window::class.java)
+        Mockito.`when`(window.attributes).thenReturn(WindowManager.LayoutParams().apply { dimAmount = 0.6f })
+        val field = LatinIME::class.java.getDeclaredField("mEmojiSearchWindowDim").apply { isAccessible = true }
+        (field.get(ime) as EmojiSearchWindowDim).open(window)
+
+        ime.onStartInput(android.view.inputmethod.EditorInfo(), false)
+        ime.closeEmojiSearch()
+
+        Mockito.verify(window).setDimAmount(0.6f)
+        Mockito.verify(window).clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
     }
 
     /** Verifies both text and selection in the host field. */
