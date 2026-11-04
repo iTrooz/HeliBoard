@@ -32,7 +32,6 @@ import helium314.keyboard.keyboard.Keyboard;
 import helium314.keyboard.keyboard.KeyboardElement;
 import helium314.keyboard.keyboard.KeyboardLayoutSet;
 import helium314.keyboard.keyboard.KeyboardSwitcher;
-import helium314.keyboard.keyboard.emoji.EmojiSearchActivity;
 import helium314.keyboard.keyboard.emoji.RecentEmojis;
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode;
 import helium314.keyboard.latin.CapsMode;
@@ -40,6 +39,7 @@ import helium314.keyboard.latin.InputStyle;
 import helium314.keyboard.latin.common.CoordinateUtils;
 import helium314.keyboard.latin.dictionary.Dictionary;
 import helium314.keyboard.latin.DictionaryFacilitator;
+import helium314.keyboard.latin.EmojiDictionaryFacilitator;
 import helium314.keyboard.latin.LastComposedWord;
 import helium314.keyboard.latin.LatinIME;
 import helium314.keyboard.latin.NgramContext;
@@ -2763,7 +2763,7 @@ public final class InputLogic {
         if (Settings.getValues().mInlineEmojiSearch && Settings.getValues().needsToLookupSuggestions() && ! mLatinIME.isEmojiSearch()) {
             if (mEmojiDictionaryFacilitator == null || ! mEmojiDictionaryFacilitator.isForLocale(locale)) {
                 closeEmojiDictionary();
-                mEmojiDictionaryFacilitator = EmojiSearchActivity.createEmojiDictFacilitatorForCurrentSettings(mLatinIME);
+                mEmojiDictionaryFacilitator = EmojiDictionaryFacilitator.createEmojiDictFacilitatorForCurrentSettings(mLatinIME);
             }
         } else {
             closeEmojiDictionary();

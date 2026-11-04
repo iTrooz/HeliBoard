@@ -35,7 +35,6 @@ import helium314.keyboard.event.HapticEvent;
 import helium314.keyboard.keyboard.KeyboardActionListener;
 import helium314.keyboard.keyboard.KeyboardActionListenerImpl;
 import helium314.keyboard.keyboard.emoji.EmojiPalettesView;
-import helium314.keyboard.keyboard.emoji.EmojiSearchActivity;
 import helium314.keyboard.keyboard.emoji.EmojiSearchInput;
 import helium314.keyboard.keyboard.emoji.EmojiSearchInputConsumption;
 import helium314.keyboard.keyboard.emoji.EmojiSearchPanel;
@@ -609,7 +608,6 @@ public class LatinIME extends InputMethodService implements
                 settingsValues.mUsePersonalizedDicts, true, "", this);
         mKeyboardSwitcher.setThemeNeedsReload(); // necessary for emoji search
         EmojiPalettesView.closeDictionaryFacilitator();
-        EmojiSearchActivity.Companion.closeDictionaryFacilitator();
     }
 
     // used for debug

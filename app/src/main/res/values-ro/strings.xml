@@ -461,7 +461,6 @@
     <string name="toolbar_only_with_hw_keyboard">Afișare doar bară de instrumente la conectarea unei tastaturi fizice</string>
     <string name="toolbar_only_with_hw_keyboard_summary">Încă trebuie să activați afișarea tastaturii virtuale din setările sistemului</string>
     <string name="folded">Pliat</string>
-    <string name="emoji_search_title">Căutare emoji</string>
     <string name="search_field_placeholder">Căutare</string>
     <string name="ask_later">Întreabă mai târziu</string>
     <string name="spell_check_suggestions">Afișare sugestii corectare ortografică</string>

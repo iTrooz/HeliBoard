@@ -428,7 +428,6 @@
     <string name="delete_confirmation">정말로 %s 항목을 삭제하시겠습니까?</string>
     <string name="name_invalid">잘못된 이름</string>
     <string name="folded">접힘</string>
-    <string name="emoji_search_title">이모지 검색</string>
     <string name="search_field_placeholder">검색</string>
     <string name="ask_later">나중에</string>
     <string name="gesture_data_screen">제스처 데이터 수집</string>

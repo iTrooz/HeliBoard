@@ -447,7 +447,6 @@
     <string name="ask_later">Später fragen</string>
     <string name="search_field_placeholder">Suchen</string>
     <string name="folded">Eingeklappt</string>
-    <string name="emoji_search_title">Emojis suchen</string>
     <string name="auto_correct_capitalized_suggestions">Vorgeschlagene Großschreibung automatisch korrigieren</string>
     <string name="auto_correct_capitalized_suggestions_description">Nachdem die Umschalttaste für die Großschreibung gedrückt wurde, wird die Autokorrektur aktiviert</string>
     <string name="custom_punctuation_suggestions">Satzzeichenvorschläge festlegen</string>

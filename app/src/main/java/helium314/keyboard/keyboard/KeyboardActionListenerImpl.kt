@@ -106,7 +106,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
 
     override fun onCodeInput(primaryCode: Int, x: Int, y: Int, isKeyRepeat: Boolean) {
         if (latinIME.isEmojiSearch) {
-            val mkv = keyboardSwitcher.mainKeyboardView
+            val mkv = keyboardSwitcher.mainKeyboardView ?: return
             val event = Event.createSoftwareKeypressEvent(primaryCode, metaState, mkv.getKeyX(x), mkv.getKeyY(y), isKeyRepeat)
             latinIME.onEvent(event)
             metaAfterCodeInput(primaryCode)

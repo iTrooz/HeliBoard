@@ -479,7 +479,6 @@
     <string name="toolbar_only_with_hw_keyboard">Fiziksel klavyeyle yalnızca araç çubuğunu göster</string>
     <string name="toolbar_only_with_hw_keyboard_summary">Yine de sistem ayarlarında sanal klavyenin gösterilmesini etkinleştirmen gerekir</string>
     <string name="folded">Katlanmış</string>
-    <string name="emoji_search_title">Emoji ara</string>
     <string name="search_field_placeholder">Ara</string>
     <string name="ask_later">Daha sonra sor</string>
     <string name="spell_check_suggestions">Yazım denetleyicisi önerilerini göster</string>

@@ -444,7 +444,6 @@
     <string name="number_row_in_symbols">Zobrazit číselný řádek na obrazovce znaků</string>
     <string name="custom_emoji_font">Nastavit vlastní písmo emodži ze souboru</string>
     <string name="layout_functional_keys_khipro" tools:keep="@string/layout_functional_keys">Funkční klávesy (Khipro)</string>
-    <string name="emoji_search_title">Hledat emodži</string>
     <string name="search_field_placeholder">Hledat</string>
     <string name="gesture_data_screen">Sbírání dat o gestech</string>
     <string name="gesture_data_info">Co je to?</string>

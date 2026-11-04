@@ -481,7 +481,6 @@
     <string name="toolbar_only_with_hw_keyboard">Erakutsi tresna-barra soilik teklatu fisikoarekin</string>
     <string name="toolbar_only_with_hw_keyboard_summary">Hala ere, teklatu birtuala erakustea gaitu behar duzu sistemaren ezarpenetan</string>
     <string name="folded">Tolestuta</string>
-    <string name="emoji_search_title">Bilatu emojiak</string>
     <string name="search_field_placeholder">Bilatu</string>
     <string name="ask_later">Galdetu geroago</string>
     <string name="spell_check_suggestions">Erakutsi ortografia zuzentzailearen iradokizunak</string>

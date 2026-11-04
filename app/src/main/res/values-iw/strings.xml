@@ -441,7 +441,6 @@
     <string name="custom_emoji_font">הגדרת גופן אמוג\'י מותאם מקובץ</string>
     <string name="number_row_in_symbols">הצגת שורת מספרים בתצוגת הסמלים</string>
     <string name="layout_functional_keys_khipro" tools:keep="@string/layout_functional_keys">פקדים פונקציונליים (Khipro)</string>
-    <string name="emoji_search_title">חיפוש אמוג׳י</string>
     <string name="search_field_placeholder">חיפוש</string>
     <string name="gesture_data_screen">איסוף נתוני מחוות</string>
     <string name="gesture_data_description">ברוך בואך אל מסך איסוף נתוני המחוות!&lt;br/&gt;&lt;br/&gt; זהו חלק מפרויקט &lt;a href=https://nlnet.nl/project/GestureTyping&gt; ממומן-NLnet&lt;/a&gt; החותר ליצור ספריית הקלדה במחוות בקוד פתוח מלא שתוכל להחליף את הספרייה של Google שהיא בקוד סגור.&lt;br/&gt; התוצר מתוכנן להוות חלופה פשוטה למקלדות מבוססות-AOSP, אך גם ניתנת לשימוש במקלדות אחרות, כדוגמת FlorisBoard.&lt;br/&gt;&lt;br/&gt; לצורך פיתוח הספרייה מאד עוזר שתהיה זמינות של נתוני שימוש במחוות בשפות שונות וע\"י משתמשים שונים.&lt;br/&gt; ע\"י איסוף והגשה של נתוני הקלדה במחוות באפשרותך לתרום למאגר פתוח של נתוני מחוות שישמש בפיתוח הספרייה. ערכת הנתונים תפורסם בהתאם לרישיון CC BY-SA 4.0 זמן מה לאחר סיום שלב איסוף הנתונים ב-%s. לאחר שביצעת איסוף של הנתונים, באפשרותך להגיש אותם באמצעות סמל השיתוף בתחתית מסך זה.</string>

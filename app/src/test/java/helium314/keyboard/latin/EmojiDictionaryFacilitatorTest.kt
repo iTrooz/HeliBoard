@@ -58,8 +58,8 @@ class EmojiDictionaryFacilitatorTest {
 
         val results = facilitator.getSuggestions(listOf("cat", "chat")).toList()
         assertEquals(listOf("🐈", "🐕"), results.map { it.word })
-        assertEquals(80, results[0].mScore)
-        assertEquals(((90L - Int.MIN_VALUE) / 2 + Int.MIN_VALUE).toInt(), results[1].mScore)
+        assertEquals(80, results[0].score)
+        assertEquals(((90L - Int.MIN_VALUE) / 2 + Int.MIN_VALUE).toInt(), results[1].score)
     }
 
     @Test fun retriesMissingDictionariesAndReloadsAfterClose() {

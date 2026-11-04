@@ -456,7 +456,6 @@
     <string name="custom_subtype">Tilpasset undertype</string>
     <string name="landscape">Liggende</string>
     <string name="folded">Sammenfoldet</string>
-    <string name="emoji_search_title">Søk etter emoji</string>
     <string name="search_field_placeholder">Søk</string>
     <string name="ask_later">Spør meg senere</string>
     <string name="gesture_data_screen">Innsamling av bevegelsesdata</string>

@@ -470,7 +470,6 @@
     <string name="toolbar_only_with_hw_keyboard">Mostrar só a barra de ferramentas com teclado físico</string>
     <string name="toolbar_only_with_hw_keyboard_summary">Ainda precisa de ativar a exibição do teclado virtual nas definições do sistema</string>
     <string name="folded">Dobrado</string>
-    <string name="emoji_search_title">Pesquisar emojis</string>
     <string name="search_field_placeholder">Pesquisar</string>
     <string name="ask_later">Perguntar mais tarde</string>
     <string name="spell_check_suggestions">Mostrar sugestões do verificador ortográfico</string>

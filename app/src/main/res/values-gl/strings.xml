@@ -452,7 +452,6 @@
     <string name="timestamp_description">Podes engadir a telca de marca de tempo usando unha disposición persoal coa tecla \'marca de tempo\', ou código de tecla -10043</string>
     <string name="prefs_bottom_row_scale">Escala da fila inferior</string>
     <string name="layout_functional_keys_khipro" tools:keep="@string/layout_functional_keys">Teclas de función (Khipro)</string>
-    <string name="emoji_search_title">Buscar emoji</string>
     <string name="search_field_placeholder">Buscar</string>
     <string name="ask_later">Preguntar máis tarde</string>
     <string name="gesture_data_screen">Obtendo datos dos xestos</string>

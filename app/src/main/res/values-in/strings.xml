@@ -448,7 +448,6 @@
     <string name="toolbar_only_with_hw_keyboard">Tampilkan hanya bilah alat saat menggunakan papan tik fisik</string>
     <string name="toolbar_only_with_hw_keyboard_summary">Anda tetap perlu mengaktifkan tampilan papan tik maya di pengaturan sistem</string>
     <string name="landscape">Lanskap</string>
-    <string name="emoji_search_title">Cari emoji</string>
     <string name="search_field_placeholder">Cari</string>
     <string name="ask_later">Tanya saya nanti</string>
     <string name="spell_check_suggestions">Tampilkan saran pengecekan ejaan</string>

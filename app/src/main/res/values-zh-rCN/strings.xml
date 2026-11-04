@@ -445,7 +445,6 @@
     <string name="number_row_in_symbols">在符号视图中显示数字行</string>
     <string name="custom_emoji_font">从文件设置自定义表情符号字体</string>
     <string name="layout_functional_keys_khipro" tools:keep="@string/layout_functional_keys">功能键（Khipro）</string>
-    <string name="emoji_search_title">搜索表情符号</string>
     <string name="search_field_placeholder">搜索</string>
     <string name="gesture_data_screen">滑行输入数据收集</string>
     <string name="gesture_data_info">这是什么？</string>

@@ -985,7 +985,6 @@ New dictionary:
     <!-- When a foldable phone is folded -->
     <string name="folded">Folded</string>
     <!-- Emoji search title bar text -->
-    <string name="emoji_search_title">Search emoji</string>
     <!-- Placeholder text for search field -->
     <string name="search_field_placeholder">Search</string>
     <!-- Button to show later -->

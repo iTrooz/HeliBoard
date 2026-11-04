@@ -5,6 +5,7 @@ import android.content.Context
 import helium314.keyboard.latin.dictionary.Dictionary
 import helium314.keyboard.latin.dictionary.DictionaryFactory
 import helium314.keyboard.latin.dictionary.DictionaryInfoUtils
+import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.suggestions.SuggestedWords
 import helium314.keyboard.latin.suggestions.SuggestionResults
 import java.util.Locale
@@ -56,5 +57,14 @@ class EmojiDictionaryFacilitator internal constructor(
         dictionaries.forEach { it.closeDictionaries() }
         dictionaries = emptyList()
         locales = null
+    }
+
+    companion object {
+        /** Emoji dictionary collection for the current typing languages. */
+        @JvmStatic
+        fun createEmojiDictFacilitatorForCurrentSettings(context: Context): SingleDictionaryFacilitator? =
+            DictionaryFactory.createEmojiDictionaryCollection(context,
+                RichInputMethodManager.getInstance().currentSubtype.locale, Settings.getValues().mSecondaryLocales
+            )?.let { SingleDictionaryFacilitator(it) }
     }
 }
