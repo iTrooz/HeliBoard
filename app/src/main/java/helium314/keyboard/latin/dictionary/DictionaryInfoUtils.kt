@@ -17,6 +17,7 @@ import helium314.keyboard.latin.makedict.UnsupportedFormatException
 import helium314.keyboard.latin.settings.SpacingAndPunctuations
 import helium314.keyboard.latin.utils.Log
 import helium314.keyboard.latin.utils.SubtypeSettings
+import helium314.keyboard.latin.utils.getSecondaryLocales
 import helium314.keyboard.latin.utils.locale
 import java.io.File
 import java.io.IOException
@@ -108,7 +109,9 @@ object DictionaryInfoUtils {
     @JvmStatic
     fun getLocalesWithEmojiDicts(context: Context): List<Locale> =
         SubtypeSettings.getEnabledSubtypes(true)
-            .map { it.locale() }.filter { getCachedDictForLocaleAndType(it, Dictionary.TYPE_EMOJI, context) != null }
+            .flatMap { listOf(it.locale()) + getSecondaryLocales(it.extraValue) }
+            .distinct()
+            .filter { getCachedDictForLocaleAndType(it, Dictionary.TYPE_EMOJI, context) != null }
 
     @JvmStatic
     fun getCachedDictForLocaleAndType(locale: Locale, type: String, context: Context): File? =
